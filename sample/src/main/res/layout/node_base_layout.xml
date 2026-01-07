@@ -1,29 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@drawable/card_background"
-    android:padding="6dp"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:padding="@dimen/size_dp_4">
+
+    <FrameLayout
+        android:id="@+id/mindNodeLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:foreground="@drawable/shape_box_radius_10"
+        android:paddingStart="@dimen/size_dp_8"
+        android:paddingTop="@dimen/size_dp_4"
+        android:paddingEnd="@dimen/size_dp_8"
+        android:paddingBottom="@dimen/size_dp_4">
+
+        <TextView
+            android:id="@+id/mindNodeTv"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:maxWidth="@dimen/size_dp_180"
+            android:textColor="@color/black" />
+
+        <EditText
+            android:id="@+id/mindNodeEt"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:autoSizeMinTextSize="@dimen/font_sp_12"
+            android:background="@null"
+            android:gravity="center"
+            android:maxWidth="@dimen/size_dp_180"
+            android:textColor="@color/black"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <View
+        android:id="@+id/line"
+        android:layout_width="@dimen/size_dp_10"
+        android:layout_height="@dimen/size_dp_1"
+        android:background="@color/black"
+        app:layout_constraintBottom_toBottomOf="@+id/mindNodeLayout"
+        app:layout_constraintStart_toEndOf="@+id/mindNodeLayout"
+        app:layout_constraintTop_toTopOf="@+id/mindNodeLayout" />
+
+
     <ImageView
-        android:id="@+id/portrait"
+        android:id="@+id/endAddBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:padding="4dp"
-        android:background="?android:attr/selectableItemBackground"
-        android:src="@mipmap/ic_launcher"/>
+        android:src="@drawable/ic_ai_mind_add_17"
+        app:layout_constraintBottom_toBottomOf="@+id/mindNodeLayout"
+        app:layout_constraintStart_toEndOf="@+id/line"
+        app:layout_constraintTop_toTopOf="@+id/mindNodeLayout" />
+
+    <View
+        android:id="@+id/line1"
+        android:layout_width="@dimen/size_dp_10"
+        android:layout_height="@dimen/size_dp_1"
+        android:background="@color/black"
+        app:layout_constraintBottom_toBottomOf="@+id/mindNodeLayout"
+        app:layout_constraintStart_toEndOf="@+id/endAddBtn"
+        app:layout_constraintTop_toTopOf="@+id/mindNodeLayout" />
+
+    <ImageView
+        android:id="@+id/endContractBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_ai_image_contract"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/mindNodeLayout"
+        app:layout_constraintStart_toEndOf="@+id/line1"
+        app:layout_constraintTop_toTopOf="@+id/mindNodeLayout" />
+
     <TextView
-        android:id="@+id/name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="2dp"
-        android:textColor="@color/textColor"
-        android:textSize="18sp"
-        app:layout_constraintTop_toBottomOf="@+id/portrait"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:text="GysoTreeView"/>
+        android:id="@+id/endExpandBtn"
+        android:layout_width="@dimen/size_dp_17"
+        android:layout_height="@dimen/size_dp_17"
+        android:autoSizeMaxTextSize="@dimen/font_sp_8"
+        android:autoSizeMinTextSize="5sp"
+        android:autoSizeTextType="uniform"
+        android:background="@drawable/ic_ai_image_expand"
+        android:gravity="center"
+        android:padding="@dimen/size_dp_1"
+        android:textColor="@color/black"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/mindNodeLayout"
+        app:layout_constraintStart_toEndOf="@+id/line1"
+        app:layout_constraintTop_toTopOf="@+id/mindNodeLayout" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,21 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/black"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <com.gyso.treeview.GysoTreeView
-        android:id="@+id/base_tree_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/colorBackground">
-    </com.gyso.treeview.GysoTreeView>
     <LinearLayout
+        android:id="@+id/upLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
         android:orientation="vertical">
 
         <LinearLayout
@@ -23,18 +21,19 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:orientation="horizontal">
+
             <TextView
                 android:id="@+id/view_center_bt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
-                android:padding="6dp"
-                android:checked="false"
-                android:text="FIT WINDOW"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/drag_mode_bg"
+                android:checked="false"
                 android:foreground="?attr/selectableItemBackground"
+                android:padding="6dp"
+                android:text="FIT WINDOW"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
                 app:layout_constraintLeft_toRightOf="@+id/drag_edit_mode_rd"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -43,13 +42,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
-                android:padding="6dp"
-                android:checked="false"
-                android:text="ADD"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/drag_mode_bg"
+                android:checked="false"
                 android:foreground="?attr/selectableItemBackground"
+                android:padding="6dp"
+                android:text="ADD"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
                 app:layout_constraintLeft_toRightOf="@+id/view_center_bt"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -58,45 +57,150 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
-                android:padding="6dp"
-                android:checked="false"
-                android:text="REMOVE"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/drag_mode_bg"
+                android:checked="false"
                 android:foreground="?attr/selectableItemBackground"
+                android:padding="6dp"
+                android:text="REMOVE"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                app:layout_constraintLeft_toRightOf="@+id/add_nodes_bt"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/copy_node_bt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:background="@drawable/drag_mode_bg"
+                android:checked="false"
+                android:foreground="?attr/selectableItemBackground"
+                android:padding="6dp"
+                android:text="COPY"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                app:layout_constraintLeft_toRightOf="@+id/add_nodes_bt"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/centerRootNodeBt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:background="@drawable/drag_mode_bg"
+                android:checked="false"
+                android:foreground="?attr/selectableItemBackground"
+                android:padding="6dp"
+                android:text="centerRoot"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
                 app:layout_constraintLeft_toRightOf="@+id/add_nodes_bt"
                 app:layout_constraintTop_toTopOf="parent" />
         </LinearLayout>
+
+
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/drag_edit_mode_rd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/drag_mode_bg"
             android:checked="false"
+            android:padding="5dp"
+            android:text="DRAG EDIT MODE"
             android:textAppearance="@style/ToggleStyle"
             android:textColor="@android:color/white"
-            android:text="DRAG EDIT MODE"
-            android:layout_marginStart="10dp"
-            android:padding="5dp"
             android:textStyle="bold"
-            android:background="@drawable/drag_mode_bg"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-    </LinearLayout>
-    <TextView
-        android:id="@+id/scale_percent"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="80dp"
-        android:background="@drawable/percent_bg"
-        android:layout_gravity="bottom|center_horizontal"
-        android:padding="10dp"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/white"
-        android:typeface="serif"
-        android:visibility="gone"
-        tools:text="100%">
-    </TextView>
 
-</FrameLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/to_scale_big_bt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:background="@drawable/drag_mode_bg"
+                android:checked="false"
+                android:foreground="?attr/selectableItemBackground"
+                android:padding="6dp"
+                android:text="Scale Big"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/to_scale_small_bt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:background="@drawable/drag_mode_bg"
+                android:checked="false"
+                android:foreground="?attr/selectableItemBackground"
+                android:padding="6dp"
+                android:text="Scale small"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/to_scale_original_bt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:background="@drawable/drag_mode_bg"
+                android:checked="false"
+                android:foreground="?attr/selectableItemBackground"
+                android:padding="6dp"
+                android:text="Scale Original"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/bitmap_bt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:background="@drawable/drag_mode_bg"
+                android:checked="false"
+                android:foreground="?attr/selectableItemBackground"
+                android:padding="6dp"
+                android:text="bitmap"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <com.gyso.treeview.GysoTreeView
+        android:id="@+id/base_tree_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="@dimen/size_dp_10"
+        android:layout_marginEnd="@dimen/size_dp_10"
+        android:layout_weight="1"
+        android:background="@color/white" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/size_dp_60"
+        android:layout_weight="0.1">
+
+        <TextView
+            android:id="@+id/scale_percent"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="bottom|center_horizontal"
+            android:background="@color/white"
+            android:padding="10dp"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:typeface="serif"
+            android:visibility="gone"
+            tools:text="100%" />
+
+    </FrameLayout>
+</LinearLayout>

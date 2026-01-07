@@ -7,99 +7,159 @@ import android.view.View;
 import com.gyso.treeview.TreeViewContainer;
 import com.gyso.treeview.adapter.TreeViewHolder;
 import com.gyso.treeview.line.BaseLine;
+import com.gyso.treeview.model.NodeItem;
 import com.gyso.treeview.model.NodeModel;
 import com.gyso.treeview.model.TreeModel;
 import com.gyso.treeview.util.ViewBox;
 
 import java.util.LinkedList;
-
-public class CompactVerticalUpAndDownLayoutManager extends CompactDownTreeLayoutManager {
+/**
+ * 紧凑型垂直上下布局管理器，继承自CompactDownTreeLayoutManager
+ * 该布局管理器将根节点的子节点分为两部分，一部分保持向下布局，另一部分镜像到向上布局
+ *
+ * @param <T> 节点项类型，必须继承自NodeItem
+ */
+public class CompactVerticalUpAndDownLayoutManager<T extends NodeItem> extends CompactDownTreeLayoutManager<T> {
+    /**
+     * 类的标签，用于调试日志
+     */
     private static final String TAG = CompactVerticalUpAndDownLayoutManager.class.getSimpleName();
+
+    /**
+     * 标识是否仅进行计算的标志位
+     * 在执行上下分布前先进行计算布局，此时该标志为true
+     */
     private boolean isJustCalculate;
+
+    /**
+     * 构造函数，初始化紧凑型垂直上下布局管理器
+     *
+     * @param context 上下文对象
+     * @param spaceParentToChild 父子节点之间的间距
+     * @param spacePeerToPeer 同级节点之间的间距
+     * @param baseline 基线对齐方式
+     */
     public CompactVerticalUpAndDownLayoutManager(Context context, int spaceParentToChild, int spacePeerToPeer, BaseLine baseline) {
         super(context, spaceParentToChild, spacePeerToPeer, baseline);
     }
 
+    /**
+     * 获取树形布局类型
+     *
+     * @return 返回垂直上下布局类型常量
+     */
     @Override
     public int getTreeLayoutType() {
         return LAYOUT_TYPE_VERTICAL_DOWN_AND_UP;
     }
 
+    /**
+     * 所有节点测量完成后的处理
+     * 计算布局框、缩放比例和位置偏移，为上下布局调整内容视图框
+     *
+     * @param treeViewContainer 树形视图容器
+     */
     @Override
-    public void onManagerFinishMeasureAllNodes(TreeViewContainer treeViewContainer) {
+    public void onManagerFinishMeasureAllNodes(TreeViewContainer<T> treeViewContainer) {
+        // 计算额外的Y偏移量（为上方布局预留空间）
         extraDeltaY = mContentViewBox.bottom;
-        mContentViewBox.bottom += (paddingBox.bottom+paddingBox.top)+extraDeltaY;
-        mContentViewBox.right  += (paddingBox.left+paddingBox.right);
+        // 更新内容视图框底部，包含上下两部分的空间
+        mContentViewBox.bottom += (paddingBox.bottom + paddingBox.top) + extraDeltaY;
+        // 更新内容视图框右侧
+        mContentViewBox.right += (paddingBox.left + paddingBox.right);
+        // 设置固定视图框
         fixedViewBox.setValues(mContentViewBox);
-        if(winHeight == 0 || winWidth==0){
+
+        if (winHeight == 0 || winWidth == 0) {
             return;
         }
-        float scale = 1f*winWidth/winHeight;
-        float wr = 1f* mContentViewBox.getWidth()/winWidth;
-        float hr = 1f* mContentViewBox.getHeight()/winHeight;
-        if(wr>=hr){
-            float bh =  mContentViewBox.getWidth()/scale;
-            fixedViewBox.bottom = (int)bh;
-        }else{
-            float bw =  mContentViewBox.getHeight()*scale;
-            fixedViewBox.right = (int)bw;
-        }
-        mFixedDx = (fixedViewBox.getWidth()-mContentViewBox.getWidth())/2;
-        mFixedDy = (fixedViewBox.getHeight()-mContentViewBox.getHeight())/2;
 
-        //compute floor start position
+        // 计算缩放比例
+        float scale = 1f * winWidth / winHeight;
+        float wr = 1f * mContentViewBox.getWidth() / winWidth;
+        float hr = 1f * mContentViewBox.getHeight() / winHeight;
+
+        // 根据宽高比调整固定视图框
+        if (wr >= hr) {
+            float bh = mContentViewBox.getWidth() / scale;
+            fixedViewBox.bottom = (int) bh;
+        } else {
+            float bw = mContentViewBox.getHeight() * scale;
+            fixedViewBox.right = (int) bw;
+        }
+
+        // 计算固定偏移量
+        mFixedDx = (fixedViewBox.getWidth() - mContentViewBox.getWidth()) / 2;
+        mFixedDy = (fixedViewBox.getHeight() - mContentViewBox.getHeight()) / 2;
+
+        // 计算楼层起始位置（注意这里调整了参数顺序，floor对应y方向）
         for (int i = 0; i <= floorMax.size(); i++) {
-            int fn = (i == floorMax.size())?floorMax.size():floorMax.keyAt(i);
+            int fn = (i == floorMax.size()) ? floorMax.size() : floorMax.keyAt(i);
             int preStart = floorStart.get(fn - 1, 0);
             int preMax = floorMax.get(fn - 1, 0);
-            int startPos = (fn==0?(mFixedDy + paddingBox.top):spaceParentToChild) + preStart + preMax;
-            floorStart.put(fn,startPos);
+            // 计算起始位置，根节点使用固定偏移量，其他节点使用父子间距
+            int startPos = (fn == 0 ? (mFixedDy + paddingBox.top) : spaceParentToChild) + preStart + preMax;
+            floorStart.put(fn, startPos);
         }
 
-        //compute deep start position
+        // 计算深度起始位置（注意这里调整了参数顺序，deep对应x方向）
         for (int i = 0; i <= deepMax.size(); i++) {
-            int dn = (i == deepMax.size())?deepMax.size():deepMax.keyAt(i);
+            int dn = (i == deepMax.size()) ? deepMax.size() : deepMax.keyAt(i);
             int preStart = deepStart.get(dn - 1, 0);
             int preMax = deepMax.get(dn - 1, 0);
-            int startPos = (dn==0?(mFixedDx + paddingBox.left):spacePeerToPeer) + preStart + preMax;
-            deepStart.put(dn,startPos);
+            // 计算起始位置，根节点使用固定偏移量，其他节点使用同级间距
+            int startPos = (dn == 0 ? (mFixedDx + paddingBox.left) : spacePeerToPeer) + preStart + preMax;
+            deepStart.put(dn, startPos);
         }
 
-        if(measureListener!=null){
+        if (measureListener != null) {
             measureListener.onMeasureFinished();
         }
     }
 
-
+    /**
+     * 执行布局操作
+     * 先执行父类的向下布局计算，然后将一半子节点镜像到向上布局
+     *
+     * @param treeViewContainer 树形视图容器
+     */
     @Override
-    public void performLayout(final TreeViewContainer treeViewContainer) {
+    public void performLayout(final TreeViewContainer<T> treeViewContainer) {
+        // 设置标志为仅计算，避免在计算阶段执行动画
         isJustCalculate = true;
+        // 执行父类的布局计算（向下布局）
         super.performLayout(treeViewContainer);
+        // 恢复标志，准备进行上下分布
         isJustCalculate = false;
-        final TreeModel<?> mTreeModel = treeViewContainer.getTreeModel();
+
+        final TreeModel<T> mTreeModel = treeViewContainer.getTreeModel();
         if (mTreeModel != null) {
-            NodeModel<?> rootNode = mTreeModel.getRootNode();
+            NodeModel<T> rootNode = mTreeModel.getRootNode();
             TreeViewHolder<?> rootNodeHolder = treeViewContainer.getTreeViewHolder(rootNode);
             View rootNodeView = rootNodeHolder == null ? null : rootNodeHolder.getView();
             if (rootNodeView == null) {
                 throw new NullPointerException(" rootNodeView can not be null");
             }
-            int rootCx = rootNodeView.getLeft()+rootNodeView.getMeasuredWidth()/2;
-            int rootCy = rootNodeView.getTop()+rootNodeView.getMeasuredHeight()/2;
-            //divide equally by two
-            LinkedList<? extends NodeModel<?>> rootNodeChildNodes = rootNode.getChildNodes();
+            // 计算根节点中心坐标
+            int rootCx = rootNodeView.getLeft() + rootNodeView.getMeasuredWidth() / 2;
+            int rootCy = rootNodeView.getTop() + rootNodeView.getMeasuredHeight() / 2;
+
+            // 将根节点的子节点平分为两部分
+            LinkedList<? extends NodeModel<T>> rootNodeChildNodes = rootNode.getChildNodes();
             Point divideDx = getDivideDx(rootNode, treeViewContainer);
-            int centerAx = divideDx.x;
-            int centerBx = divideDx.y;
-            int divider = rootNodeChildNodes.size()/2;
+            int centerAx = divideDx.x; // 第一部分的中心X坐标
+            int centerBx = divideDx.y; // 第二部分的中心X坐标
+            int divider = rootNodeChildNodes.size() / 2;
             int count = 0;
-            for (NodeModel<?> node : rootNodeChildNodes) {
-                if(count<divider){
-                    //move to mid
-                    node.traverseIncludeSelf(n -> moveDx(n,treeViewContainer, (rootCx- centerAx)));
-                }else{
-                    //move to other side
-                    node.traverseIncludeSelf(n -> mirrorByCxDy(n,treeViewContainer,rootCy, (rootCx - centerBx)));
+
+            // 遍历子节点，前一半保持向下，后一半镜像到向上
+            for (NodeModel<T> node : rootNodeChildNodes) {
+                if (count < divider) {
+                    // 前一半节点移动到中心位置
+                    node.traverseIncludeSelf(n -> moveDx(n, treeViewContainer, (rootCx - centerAx)));
+                } else {
+                    // 后一半节点镜像到向上
+                    node.traverseIncludeSelf(n -> mirrorByCxDy(n, treeViewContainer, rootCy, (rootCx - centerBx)));
                 }
                 count++;
             }
@@ -107,83 +167,132 @@ public class CompactVerticalUpAndDownLayoutManager extends CompactDownTreeLayout
         }
     }
 
-    private Point getDivideDx(NodeModel<?> rootNode, TreeViewContainer treeViewContainer){
-        LinkedList<? extends NodeModel<?>> rootNodeChildNodes = rootNode.getChildNodes();
-        int divider = rootNodeChildNodes.size()/2;
+    /**
+     * 计算分割点的X坐标，用于确定上下两部分的水平中心位置
+     *
+     * @param rootNode 根节点
+     * @param treeViewContainer 树形视图容器
+     * @return 包含上下两部分水平中心坐标的Point对象
+     */
+    private Point getDivideDx(NodeModel<T> rootNode, TreeViewContainer<T> treeViewContainer) {
+        LinkedList<? extends NodeModel<T>> rootNodeChildNodes = rootNode.getChildNodes();
+        int divider = rootNodeChildNodes.size() / 2;
         int count = 0;
-        int minA,maxA,minB,maxB;
+        int minA, maxA, minB, maxB;
         minA = minB = Integer.MAX_VALUE;
-        maxA= maxB = Integer.MIN_VALUE;
-        for (NodeModel<?> currentNode : rootNodeChildNodes) {
+        maxA = maxB = Integer.MIN_VALUE;
+
+        // 遍历子节点，计算前一半和后一半的边界
+        for (NodeModel<T> currentNode : rootNodeChildNodes) {
             TreeViewHolder<?> currentHolder = treeViewContainer.getTreeViewHolder(currentNode);
             View currentNodeView = currentHolder == null ? null : currentHolder.getView();
             if (currentNodeView == null) {
                 throw new NullPointerException(" currentNodeView can not be null");
             }
-            int left =currentNodeView.getLeft();
+            int left = currentNodeView.getLeft();
             int top = currentNodeView.getTop();
             int currentHeight = currentNodeView.getMeasuredHeight();
-            int currentWidth =  currentNodeView.getMeasuredWidth();
-            if(count<divider){
-                minA = Math.min(minA,left);
-                maxA = Math.max(maxA, left+currentWidth);
-            }else{
-                minB = Math.min(minB,left);
-                maxB = Math.max(maxB, left+currentWidth);
+            int currentWidth = currentNodeView.getMeasuredWidth();
+
+            if (count < divider) {
+                // 前一半节点的边界
+                minA = Math.min(minA, left);
+                maxA = Math.max(maxA, left + currentWidth);
+            } else {
+                // 后一半节点的边界
+                minB = Math.min(minB, left);
+                maxB = Math.max(maxB, left + currentWidth);
             }
             count++;
         }
-        return new Point((maxA+minA)/2,(maxB+minB)/2);
+        // 返回两部分的中心X坐标
+        return new Point((maxA + minA) / 2, (maxB + minB) / 2);
     }
 
-    private void moveDx(NodeModel<?> currentNode, TreeViewContainer treeViewContainer, int deltaX){
+    /**
+     * 移动节点的X坐标位置
+     *
+     * @param currentNode 当前节点
+     * @param treeViewContainer 树形视图容器
+     * @param deltaX X轴偏移量
+     */
+    private void moveDx(NodeModel<T> currentNode, TreeViewContainer<T> treeViewContainer, int deltaX) {
         TreeViewHolder<?> currentHolder = treeViewContainer.getTreeViewHolder(currentNode);
         View currentNodeView = currentHolder == null ? null : currentHolder.getView();
         if (currentNodeView == null) {
             throw new NullPointerException(" currentNodeView can not be null");
         }
+        // 设置布局类型为向下布局
         currentHolder.setHolderLayoutType(LAYOUT_TYPE_VERTICAL_DOWN);
         int currentWidth = currentNodeView.getMeasuredWidth();
         int currentHeight = currentNodeView.getMeasuredHeight();
-        int left =deltaX+ currentNodeView.getLeft();
-        int right = left+currentWidth;
+        int left = deltaX + currentNodeView.getLeft();
+        int right = left + currentWidth;
         int top = currentNodeView.getTop();
-        int bottom = top+currentHeight;
+        int bottom = top + currentHeight;
         ViewBox finalLocation = new ViewBox(top, left, bottom, right);
         onManagerLayoutNode(currentNode, currentNodeView, finalLocation, treeViewContainer);
     }
 
-    private void mirrorByCxDy(NodeModel<?> currentNode, TreeViewContainer treeViewContainer,int centerY, int deltaX){
+    /**
+     * 以中心点为轴心镜像节点到向上布局
+     *
+     * @param currentNode 当前节点
+     * @param treeViewContainer 树形视图容器
+     * @param centerY Y轴中心点
+     * @param deltaX X轴偏移量
+     */
+    private void mirrorByCxDy(NodeModel<T> currentNode, TreeViewContainer<T> treeViewContainer, int centerY, int deltaX) {
         TreeViewHolder<?> currentHolder = treeViewContainer.getTreeViewHolder(currentNode);
         View currentNodeView = currentHolder == null ? null : currentHolder.getView();
         if (currentNodeView == null) {
             throw new NullPointerException(" currentNodeView can not be null");
         }
+        // 设置布局类型为向上布局
         currentHolder.setHolderLayoutType(LAYOUT_TYPE_VERTICAL_UP);
         int currentWidth = currentNodeView.getMeasuredWidth();
         int currentHeight = currentNodeView.getMeasuredHeight();
-        int left =deltaX+currentNodeView.getLeft();
-        int right = left+currentWidth;
-        int top = centerY*2- currentNodeView.getTop()-spaceParentToChild-currentHeight/2;
-        int bottom = top+currentHeight;
+        int left = deltaX + currentNodeView.getLeft();
+        int right = left + currentWidth;
+        // 计算向上布局的Y坐标
+        int top = centerY * 2 - currentNodeView.getTop() - spaceParentToChild - currentHeight / 2;
+        int bottom = top + currentHeight;
         ViewBox finalLocation = new ViewBox(top, left, bottom, right);
         onManagerLayoutNode(currentNode, currentNodeView, finalLocation, treeViewContainer);
     }
 
+    /**
+     * 布局单个节点
+     * 根据isJustCalculate标志决定是否执行动画准备
+     *
+     * @param currentNode 当前节点模型
+     * @param currentNodeView 当前节点视图
+     * @param finalLocation 最终位置信息
+     * @param treeViewContainer 树形视图容器
+     */
     @Override
-    public void onManagerLayoutNode(NodeModel<?> currentNode, View currentNodeView, ViewBox finalLocation, TreeViewContainer treeViewContainer) {
-        if(isJustCalculate){
+    public void onManagerLayoutNode(NodeModel<T> currentNode, View currentNodeView, ViewBox finalLocation, TreeViewContainer<T> treeViewContainer) {
+        // 如果仅进行计算，则直接执行布局，不执行动画
+        if (isJustCalculate) {
             currentNodeView.layout(finalLocation.left, finalLocation.top, finalLocation.right, finalLocation.bottom);
             return;
         }
+        // 否则执行动画准备，如果动画准备失败则直接布局
         if (!layoutAnimatePrepare(currentNode, currentNodeView, finalLocation, treeViewContainer)) {
             currentNodeView.layout(finalLocation.left, finalLocation.top, finalLocation.right, finalLocation.bottom);
         }
     }
 
+    /**
+     * 完成所有节点布局后的处理
+     * 只有在非计算模式下才调用父类的完成处理方法
+     *
+     * @param treeViewContainer 树形视图容器
+     */
     @Override
-    public void onManagerFinishLayoutAllNodes(TreeViewContainer treeViewContainer) {
-        if(!isJustCalculate){
+    public void onManagerFinishLayoutAllNodes(TreeViewContainer<T> treeViewContainer) {
+        // 只有在非计算模式下才执行父类的完成处理
+        if (!isJustCalculate) {
             super.onManagerFinishLayoutAllNodes(treeViewContainer);
         }
     }
