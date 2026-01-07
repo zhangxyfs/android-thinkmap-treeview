@@ -36,5 +36,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ThinkMind-TreeView"
-include(":simple")
+include(":sample")
 include(":library")

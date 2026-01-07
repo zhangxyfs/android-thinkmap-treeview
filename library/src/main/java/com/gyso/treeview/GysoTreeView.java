@@ -242,6 +242,4 @@ public class GysoTreeView<T extends NodeItem> extends FrameLayout implements Tou
 
         removeView(treeViewContainer);
     }
-
-
 }
