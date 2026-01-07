@@ -2,29 +2,24 @@ package com.gyso.treeview;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.RenderNode;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicBlur;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.graphics.BitmapCompat;
 
 import com.gyso.treeview.adapter.TreeViewAdapter;
 import com.gyso.treeview.cache_pool.PointPool;
 import com.gyso.treeview.layout.TreeLayoutManager;
 import com.gyso.treeview.listener.TreeViewControlListener;
+import com.gyso.treeview.model.NodeItem;
 import com.gyso.treeview.touch.TouchEventHandler;
 import com.gyso.treeview.util.TreeViewLog;
 
@@ -34,36 +29,37 @@ import com.gyso.treeview.util.TreeViewLog;
  * @Time: 2021/4/29  14:09
  * @Email: 674149099@qq.com
  * @WeChat: guaishouN
- * @Describe:
- * the main tree view.
+ * @Describe: the main tree view.
  */
-public class GysoTreeView extends FrameLayout {
+public class GysoTreeView<T extends NodeItem> extends FrameLayout implements TouchEventHandler.TouchEventListener, TouchEventHandler.ToucheHandlerListener {
     public static final String TAG = GysoTreeView.class.getSimpleName();
-    private final TreeViewContainer treeViewContainer;
+    private final TreeViewContainer<T> treeViewContainer;
     private final TouchEventHandler treeViewGestureHandler;
     private boolean disallowIntercept = false;
 
     public GysoTreeView(@NonNull Context context) {
-        this(context, null,0);
+        this(context, null, 0);
     }
 
     public GysoTreeView(@NonNull Context context, @Nullable AttributeSet attrs) {
-        this(context, attrs,0);
+        this(context, attrs, 0);
     }
     //private Paint paint = new Paint();
 
     public GysoTreeView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT);
+        LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
         setClipChildren(false);
         setClipToPadding(false);
-        treeViewContainer = new TreeViewContainer(getContext());
+        treeViewContainer = new TreeViewContainer<>(getContext());
         treeViewContainer.setLayoutParams(layoutParams);
         addView(treeViewContainer);
-        treeViewGestureHandler = new TouchEventHandler(getContext(), treeViewContainer);
+        treeViewGestureHandler = new TouchEventHandler(getContext(), this);
 
         //Note: do not set setKeepInViewport(true), there still has bug
         treeViewGestureHandler.setKeepInViewport(false);
+
+        treeViewGestureHandler.setTouchEventListener(this);
 
         //set animate default
         treeViewContainer.setAnimateAdd(true);
@@ -74,11 +70,20 @@ public class GysoTreeView extends FrameLayout {
         //setLayerType(LAYER_TYPE_HARDWARE,paint);
     }
 
+    public void setFriction(float friction) {
+        treeViewGestureHandler.setFriction(friction);
+    }
+
+    public void setDebug(boolean b) {
+        TreeViewLog.isDebug = b;
+        treeViewContainer.setIsDebug(b);
+    }
+
     @Override
     public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
         super.requestDisallowInterceptTouchEvent(disallowIntercept);
         this.disallowIntercept = disallowIntercept;
-        TreeViewLog.e(TAG, "requestDisallowInterceptTouchEvent:"+disallowIntercept);
+        TreeViewLog.e(TAG, "requestDisallowInterceptTouchEvent:" + disallowIntercept);
     }
 
     @Override
@@ -88,20 +93,22 @@ public class GysoTreeView extends FrameLayout {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
-        TreeViewLog.e(TAG, "onInterceptTouchEvent: "+MotionEvent.actionToString(event.getAction()));
+        TreeViewLog.e(TAG, "onInterceptTouchEvent: " + MotionEvent.actionToString(event.getAction()));
         return (!disallowIntercept && treeViewGestureHandler.detectInterceptTouchEvent(event)) || super.onInterceptTouchEvent(event);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        TreeViewLog.e(TAG, "onTouchEvent: "+MotionEvent.actionToString(event.getAction()));
+        TreeViewLog.e(TAG, "onTouchEvent: " + MotionEvent.actionToString(event.getAction()));
         return !disallowIntercept && treeViewGestureHandler.onTouchEvent(event);
     }
+
     //Bitmap bitmap = null;
     @Override
     public void draw(Canvas canvas) {
         super.draw(canvas);
     }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -118,7 +125,14 @@ public class GysoTreeView extends FrameLayout {
         //canvas.restore();
     }
 
-    private void doBlur(Bitmap bitmap){
+    @Override
+    public void lastTouchEvent(MotionEvent event) {
+        if (treeViewContainer != null) {
+            treeViewContainer.setLastTouchEvent(event);
+        }
+    }
+
+    private void doBlur(Bitmap bitmap) {
         Bitmap newmap;
         for (int i = 0; i < 10; i++) {
             newmap = goBlur(bitmap, 20f, getContext());
@@ -126,8 +140,8 @@ public class GysoTreeView extends FrameLayout {
         }
     }
 
-    public static Bitmap goBlur(Bitmap bitmap,float radius,Context mContext) {
-        Log.d(TAG, "goBlur: ");
+    public static Bitmap goBlur(Bitmap bitmap, float radius, Context mContext) {
+        TreeViewLog.d(TAG, "goBlur: ");
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
         Bitmap result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
@@ -160,28 +174,54 @@ public class GysoTreeView extends FrameLayout {
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        treeViewGestureHandler.setViewport(w,h);
+        treeViewGestureHandler.setViewport(w, h);
     }
 
-    public void setAdapter(TreeViewAdapter adapter) {
+    public void setAdapter(TreeViewAdapter<T> adapter) {
         treeViewContainer.setAdapter(adapter);
     }
 
-    public TreeViewAdapter getAdapter() {
+    public TreeViewAdapter<T> getAdapter() {
         return treeViewContainer.getAdapter();
     }
 
-    public void setTreeLayoutManager(TreeLayoutManager TreeLayoutManager) {
+    public void setTreeLayoutManager(TreeLayoutManager<T> TreeLayoutManager) {
         treeViewContainer.setTreeLayoutManager(TreeLayoutManager);
     }
 
-    public TreeViewEditor getEditor(){
-        return new TreeViewEditor(treeViewContainer);
+    public TreeViewEditor<T> getEditor() {
+        return new TreeViewEditor<>(treeViewContainer);
     }
 
-    public void setTreeViewControlListener(TreeViewControlListener listener){
+    /**
+     * 设置缩放比例范围
+     *
+     * @param maxScale 最大缩放比例
+     * @param minScale 最小缩放比例
+     */
+    public void setScale(float maxScale, float minScale) {
+        treeViewGestureHandler.setScale(maxScale, minScale);
+    }
+
+    /**
+     * 获取当前的缩放比例
+     *
+     * @return float 当前的缩放比例值
+     */
+    public float getNowScale() {
+        return treeViewGestureHandler.getNowScale();
+    }
+
+
+    public void setTreeViewControlListener(TreeViewControlListener<T> listener) {
         treeViewGestureHandler.setControlListener(listener);
         treeViewContainer.setControlListener(listener);
+    }
+
+    public void setOnNodeClickListener(TreeViewContainer.OnNodeClickListener<T> listener) {
+        if (treeViewContainer != null) {
+            treeViewContainer.setOnNodeClickListener(listener);
+        }
     }
 
     @Override
@@ -190,4 +230,18 @@ public class GysoTreeView extends FrameLayout {
         PointPool.freeAll();
         TreeViewLog.d(TAG, "onDetachedFromWindow: ");
     }
+
+    @Override
+    public View needView() {
+        return treeViewContainer;
+    }
+
+    public void release() {
+        treeViewContainer.release();
+        treeViewGestureHandler.release();
+
+        removeView(treeViewContainer);
+    }
+
+
 }
