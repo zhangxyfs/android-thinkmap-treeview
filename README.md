@@ -5,6 +5,13 @@
 
 ⭐⭐⭐⭐⭐Tree View; Mind map; Think map; tree map; 树状图；思维导图；组织机构图；层次图；树型图
 
+#### Add some functions on the original basis: 
+- Hide/Show Sub-Nodes
+- Focus on the root node and zoom in
+- Add the "release" method
+- Fix some bugs
+
+
 A custom tree view for Android,  designed for easy drawing some tree nodes (e.g. thind mind and tree nodes). Includes smoothly zoom, move, limit and center fix animation support, and allows easy extension so you can add your own child node's customs view and touch event detection.
 ```groovy
     dependencies {
