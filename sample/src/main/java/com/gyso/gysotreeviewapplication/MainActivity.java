@@ -21,11 +21,9 @@ import com.gyso.gysotreeviewapplication.databinding.ActivityMainBinding;
 import com.gyso.treeview.TreeViewContainer;
 import com.gyso.treeview.TreeViewEditor;
 import com.gyso.treeview.layout.BoxRightTreeLayoutManager;
-import com.gyso.treeview.layout.BoxVerticalUpAndDownLayoutManager;
 import com.gyso.treeview.layout.TreeLayoutManager;
 import com.gyso.treeview.line.AngledLine;
 import com.gyso.treeview.line.BaseLine;
-import com.gyso.treeview.line.SmoothLine;
 import com.gyso.treeview.listener.TreeViewControlListener;
 import com.gyso.treeview.model.NodeModel;
 import com.gyso.treeview.model.Position;
@@ -133,6 +131,8 @@ public class MainActivity extends AppCompatActivity implements AnimalTreeViewAda
             Log.e(TAG, "expand click");
             node.setContract(false);
             mAdapter.updateNodeView(node, node.value);
+        } else if (checkXYInView(view, view.findViewById(R.id.mindNodeLayout), position)) {
+            //可以弹出个popupWindow
         }
 
     }
@@ -274,9 +274,22 @@ public class MainActivity extends AppCompatActivity implements AnimalTreeViewAda
 
             }
 
+            /**
+             * 处理拖拽移动节点完成事件
+             * 当节点拖拽移动完成后，更新数据库中的树节点位置信息
+             * @param childNode 被移动的子节点，可能为null
+             * @param toParentNode 目标父节点，可能为null
+             */
             @Override
             public void onDragMoveNodeComplete(@Nullable NodeModel<Animal> childNode, @Nullable NodeModel<Animal> toParentNode) {
-
+                if (childNode == null || toParentNode == null) return;
+                //可以在此进行保存移动后的节点数据
+                //.............
+                //获取移动后的节点的view
+                View nodeView = mEditor.getContainer().getNodeView(childNode);
+                if (nodeView == null) return;
+                TextView mindNodeTv = nodeView.findViewById(R.id.mindNodeTv);
+                mindNodeTv.setText(childNode.value.name + " 我移动了");
             }
         });
     }
