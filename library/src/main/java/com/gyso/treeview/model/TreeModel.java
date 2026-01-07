@@ -1,6 +1,9 @@
 package com.gyso.treeview.model;
 
 import android.util.SparseArray;
+
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -12,16 +15,17 @@ import java.util.Stack;
  * manager the tree data nodes
  * guaishouN 674149099@qq.com
  */
-public class TreeModel<T> implements Serializable {
+public class TreeModel<T extends NodeItem> implements Serializable {
     private static final String TAG = TreeModel.class.getSimpleName();
     /**
      * the root for the tree
      */
     private NodeModel<T> rootNode;
-    private SparseArray<LinkedList<NodeModel>> arrayByFloor = new SparseArray<>(10);
-    private transient ITraversal<NodeModel<?>> iTraversal;
-    private int maxDeep =0;
-    private int minDeep =0;
+    private SparseArray<LinkedList<NodeModel<T>>> arrayByFloor = new SparseArray<>(10);
+    private transient ITraversal<NodeModel<T>> iTraversal;
+    private int maxDeep = 0;
+    private int minDeep = 0;
+
     public TreeModel(NodeModel<T> rootNode) {
         this.rootNode = rootNode;
     }
@@ -30,23 +34,27 @@ public class TreeModel<T> implements Serializable {
 
     /**
      * add the node in some father node
+     *
      * @param parent
      * @param childNodes
      */
     @SafeVarargs
-    public final void addNode(NodeModel<?> parent, NodeModel<?>... childNodes) {
-        if(parent!=null&&childNodes!=null && childNodes.length>0){
+    public final void addNode(@NotNull NodeModel<T> parent, @NotNull NodeModel<T>... childNodes) {
+        for (NodeModel<T> childNode : childNodes) {
+            if (childNode == parent) return;
+        }
+        if (childNodes.length > 0) {
             parent.treeModel = this;
             List<NodeModel<T>> nodeModels = new LinkedList<>();
-            for (int i = 0; i < childNodes.length; i++) {
-                nodeModels.add((NodeModel<T>)childNodes[i]);
-                childNodes[i].treeModel = this;
+            for (NodeModel<T> childNode : childNodes) {
+                nodeModels.add(childNode);
+                childNode.treeModel = this;
             }
-            ((NodeModel<T>)parent).addChildNodes(nodeModels);
-            for(NodeModel<?> child:childNodes){
-                child.traverseIncludeSelf(next->{
-                    next.floor = next.parentNode.floor+1;
-                    List<NodeModel> floorList = getFloorList(next.floor);
+            parent.addChildNodes(nodeModels);
+            for (NodeModel<T> child : childNodes) {
+                child.traverseIncludeSelf(next -> {
+                    next.floor = next.parentNode.floor + 1;
+                    List<NodeModel<T>> floorList = getFloorList(next.floor);
                     floorList.add(next);
                 });
             }
@@ -55,14 +63,15 @@ public class TreeModel<T> implements Serializable {
 
     /**
      * remove
-     * @param parent p node
+     *
+     * @param parent    p node
      * @param childNode c node
      */
-    public void removeNode(NodeModel<?> parent, NodeModel<?> childNode) {
-        if(parent!=null&&childNode!=null){
+    public void removeNode(NodeModel<T> parent, NodeModel<T> childNode) {
+        if (parent != null && childNode != null) {
             parent.removeChildNode(childNode);
-            childNode.traverseIncludeSelf(next->{
-                List<NodeModel> nf = getFloorList(next.floor);
+            childNode.traverseIncludeSelf(next -> {
+                List<NodeModel<T>> nf = getFloorList(next.floor);
                 nf.remove(next);
                 next.floor = 0;
             });
@@ -75,7 +84,7 @@ public class TreeModel<T> implements Serializable {
 
 
     /**
-     *child nodes will ergodic in the last
+     * child nodes will ergodic in the last
      * 广度遍历
      * breadth search
      * For every floor , child nodes  has been  sort 0--->n;
@@ -90,14 +99,14 @@ public class TreeModel<T> implements Serializable {
             if (iTraversal != null) {
                 iTraversal.next(rootNode);
             }
-            if(this.finishTraversal){
+            if (this.finishTraversal) {
                 break;
             }
-            if(rootNode==null){
+            if (rootNode == null) {
                 continue;
             }
             LinkedList<NodeModel<T>> childNodes = rootNode.getChildNodes();
-            if (childNodes.size() > 0) {
+            if (!childNodes.isEmpty()) {
                 deque.addAll(childNodes);
             }
         }
@@ -107,19 +116,19 @@ public class TreeModel<T> implements Serializable {
         }
     }
 
-    public SparseArray<LinkedList<NodeModel>> getArrayByFloor() {
+    public SparseArray<LinkedList<NodeModel<T>>> getArrayByFloor() {
         return arrayByFloor;
     }
 
     /**
-     * @param floor  level
+     * @param floor level
      * @return all nodes in the same floor
      */
-    public List<NodeModel> getFloorList(int floor){
-        LinkedList<NodeModel> nodeModels = arrayByFloor.get(floor);
-        if(nodeModels==null){
+    public List<NodeModel<T>> getFloorList(int floor) {
+        LinkedList<NodeModel<T>> nodeModels = arrayByFloor.get(floor);
+        if (nodeModels == null) {
             nodeModels = new LinkedList<>();
-            arrayByFloor.put(floor,nodeModels);
+            arrayByFloor.put(floor, nodeModels);
         }
         return nodeModels;
     }
@@ -128,32 +137,33 @@ public class TreeModel<T> implements Serializable {
         this.finishTraversal = finishTraversal;
     }
 
-    public void doTraversalNodes(ITraversal<NodeModel<?>> ITraversal){
-        doTraversalNodes(ITraversal,true);
+    public void doTraversalNodes(ITraversal<NodeModel<T>> ITraversal) {
+        doTraversalNodes(ITraversal, true);
     }
 
     /**
      * when ergodic this tree, it will call back on {@link ITraversal)}
+     *
      * @param ITraversal node
      */
-    public void doTraversalNodes(ITraversal<NodeModel<?>> ITraversal, boolean isOrderByFloor) {
+    public void doTraversalNodes(ITraversal<NodeModel<T>> ITraversal, boolean isOrderByFloor) {
         this.iTraversal = ITraversal;
         this.finishTraversal = false;
-        if(isOrderByFloor){
+        if (isOrderByFloor) {
             ergodicTreeByFloor();
-        }else{
+        } else {
             ergodicTreeByDeep();
         }
     }
 
     /**
-     *child nodes will ergodic by deep
+     * child nodes will ergodic by deep
      * 深度遍历
      * depth search
      * For every  child node list  has been  sort 0--->n;
      * And node will been display one then the children by deep until end.
      */
-    private void ergodicTreeByDeep(){
+    private void ergodicTreeByDeep() {
         Stack<NodeModel<T>> stack = new Stack<>();
         NodeModel<T> rootNode = getRootNode();
         stack.add(rootNode);
@@ -162,14 +172,14 @@ public class TreeModel<T> implements Serializable {
             if (iTraversal != null) {
                 iTraversal.next(rootNode);
             }
-            if(this.finishTraversal){
+            if (this.finishTraversal) {
                 break;
             }
-            if(rootNode==null){
+            if (rootNode == null) {
                 continue;
             }
             LinkedList<NodeModel<T>> childNodes = rootNode.getChildNodes();
-            if (childNodes.size() > 0) {
+            if (!childNodes.isEmpty()) {
                 stack.addAll(childNodes);
             }
         }
