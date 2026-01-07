@@ -1,7 +1,5 @@
 package com.gyso.treeview.cache_pool;
 
-import android.graphics.PointF;
-
 import androidx.core.util.Pools;
 
 import com.gyso.treeview.adapter.TreeViewHolder;
@@ -12,7 +10,7 @@ import com.gyso.treeview.adapter.TreeViewHolder;
  * @Email: 674149099@qq.com
  * @WeChat: guaishouN
  * @Describe:
- *  * Holder pool. {@link com.gyso.treeview.adapter.TreeViewHolder}
+ *  * Holder pool. {@link TreeViewHolder}
  *  * NOTE: not safe pool, please just use in UI thread
  */
 public class HolderPool  extends Pools.SimplePool<TreeViewHolder<?>> {
